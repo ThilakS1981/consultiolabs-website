@@ -1,0 +1,16 @@
+{
+  "name": "Neos Projekt-Toolbox",
+  "short_name": "Toolbox",
+  "description": "Kleine Helfer für den Projektalltag von consultio labs. Ohne Login, ohne Tracking.",
+  "lang": "de",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F7F6F1",
+  "theme_color": "#1B2A41",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

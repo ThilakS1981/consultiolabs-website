@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1B2A41">
+<title>Neos Projekt-Toolbox</title>
+<meta name="description" content="Kleine Helfer für den Projektalltag: Meeting-Kostenrechner, Meeting-Check, Tipps und Prompt-Vorlagen. Ohne Login, ohne Tracking.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="Toolbox">
+<style>
+@font-face{font-family:Inter;font-weight:400;font-display:swap;src:url(../assets/fonts/Inter-Regular.woff) format("woff")}
+@font-face{font-family:Inter;font-weight:500;font-display:swap;src:url(../assets/fonts/Inter-Medium.woff) format("woff")}
+@font-face{font-family:Inter;font-weight:600;font-display:swap;src:url(../assets/fonts/Inter-SemiBold.woff) format("woff")}
+@font-face{font-family:"Space Grotesk";font-weight:500 700;font-display:swap;src:url(../assets/fonts/SpaceGrotesk.woff2) format("woff2"),url(../assets/fonts/SpaceGrotesk.ttf) format("truetype")}
+/* VOICE: freundlich, praktisch, wie Neo – kurze Sätze, sofort nutzbar
+   IDEA: ein Werkzeugkasten in der Hosentasche – vier Fächer, ein Griff
+   PICTURE: das jeweils aktive Werkzeug selbst, groß, mit Live-Ergebnis
+   COLOUR and TYPE: Consultio – Papier #F7F6F1, Navy #1B2A41, Petrol #30A8A2; Space Grotesk + Inter
+   LAYOUT: mobile-first, eine Spalte, Tab-Leiste unten am Handy, oben am Desktop */
+:root{color-scheme:light dark;
+--bg:light-dark(#F7F6F1,#101a29);--card:light-dark(#FFFFFF,#1B2A41);--ink:light-dark(#1B2A41,#EEF1F6);
+--soft:light-dark(#3D4C66,#C9CDDA);--line:light-dark(#1B2A41,#5A6B88);--acc:#30A8A2;--acc-ink:#1B2A41;
+--tint:light-dark(#E3F5F3,#17384a);--shadow:light-dark(#1B2A41,#000000)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Inter,system-ui,sans-serif;overflow-x:clip;padding-bottom:96px}
+h1,h2,h3{font-family:'Space Grotesk',sans-serif;margin:0;line-height:1.08;text-wrap:balance;letter-spacing:-.02em}
+header{max-width:760px;margin:0 auto;padding:20px 16px 8px;display:flex;align-items:center;gap:12px}
+header .brand{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:20px}
+header .brand span{color:var(--acc)}
+.intro{max-width:760px;margin:0 auto;padding:4px 16px 12px;color:var(--soft);font-size:15px}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--card);border-top:2px solid var(--line);display:grid;grid-template-columns:repeat(5,minmax(0,1fr));padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+nav.tabs a{display:flex;flex-direction:column;align-items:center;gap:2px;min-height:52px;justify-content:center;border-radius:12px;text-decoration:none;color:var(--soft);font-size:12px;font-weight:600}
+nav.tabs a[aria-current=page]{background:var(--tint);color:var(--ink)}
+nav.tabs svg{width:22px;height:22px}
+@media(min-width:760px){body{padding-bottom:40px}nav.tabs{position:static;max-width:728px;margin:8px auto 0;border:2px solid var(--line);border-radius:16px;box-shadow:4px 4px 0 var(--shadow)}nav.tabs a{flex-direction:row;gap:8px;font-size:14px}}
+main{max-width:760px;margin:0 auto;padding:16px}
+.tool{display:none}.tool.on{display:block}
+.card{background:var(--card);border:2px solid var(--line);border-radius:22px;box-shadow:6px 6px 0 var(--shadow);padding:clamp(18px,4vw,32px);display:flex;flex-direction:column;gap:18px}
+.tool h2{font-size:clamp(26px,5vw,34px)}
+.sub{color:var(--soft);margin:-8px 0 0}
+label{font-weight:600;font-size:15px;display:block;margin-bottom:6px}
+input,select,textarea{width:100%;font:16px Inter,sans-serif;color:var(--ink);background:var(--bg);border:2px solid var(--line);border-radius:12px;padding:12px 14px;min-height:48px}
+textarea{min-height:84px;resize:vertical}
+input[type=range]{padding:0;border:0;background:none;accent-color:var(--acc);min-height:32px}
+:focus-visible{outline:3px solid #2F5BFF;outline-offset:2px}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+.btns{display:flex;flex-wrap:wrap;gap:10px}
+button{font:600 16px Inter,sans-serif;min-height:48px;padding:10px 20px;border:2px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);cursor:pointer}
+button.pri{background:var(--acc);color:var(--acc-ink);border-color:#1B2A41;box-shadow:3px 3px 0 var(--shadow)}
+button.dark{background:#1B2A41;color:#fff;border-color:#1B2A41}
+button:active{transform:translate(2px,2px);box-shadow:none}
+.big{background:var(--tint);border:2px solid var(--line);border-radius:18px;padding:20px;text-align:center}
+.big .num{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:clamp(44px,12vw,72px);line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums}
+.big .cap{color:var(--soft);font-size:15px;margin-top:6px}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.facts div{border:2px solid var(--line);border-radius:14px;padding:10px 14px}
+.facts b{display:block;font-family:'Space Grotesk',sans-serif;font-size:22px;white-space:nowrap}
+.facts span{font-size:13px;color:var(--soft)}
+.note{font-size:13px;color:var(--soft)}
+.checks{display:flex;flex-direction:column;gap:8px}
+.checks label{display:flex;gap:10px;align-items:center;font-weight:500;min-height:44px;border:2px solid var(--line);border-radius:12px;padding:8px 12px;margin:0;cursor:pointer}
+.checks input{width:22px;height:22px;min-height:0;accent-color:var(--acc)}
+.meter{height:14px;border:2px solid var(--line);border-radius:99px;overflow:hidden;background:var(--bg)}
+.meter i{display:block;height:100%;background:var(--acc);transition:width .3s}
+.out{white-space:pre-wrap;background:var(--bg);border:2px dashed var(--line);border-radius:14px;padding:14px;font-size:15px}
+.tip{background:var(--acc);color:#1B2A41;border:2px solid #1B2A41;border-radius:20px 20px 20px 6px;padding:clamp(20px,5vw,32px);box-shadow:6px 6px 0 var(--shadow)}
+.tip .tag{display:inline-block;font-size:13px;font-weight:600;background:#fff;border:2px solid #1B2A41;border-radius:99px;padding:3px 12px}
+.tip h3{font-size:clamp(24px,5vw,32px);margin:14px 0 10px}
+.tip p{margin:0;font-size:17px}
+.neo{display:flex;gap:12px;align-items:center;font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips button{min-height:44px;padding:8px 14px;font-size:14px;border-radius:99px}
+.chips button[aria-pressed=true]{background:#1B2A41;color:#fff}
+.priv{max-width:760px;margin:8px auto 0;padding:0 16px;display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--soft)}
+nav.tabs a{font-size:11px}
+@media(min-width:760px){nav.tabs a{font-size:14px}}
+.badge{display:inline-block;font:700 12px Inter,sans-serif;letter-spacing:.02em;background:#1B2A41;color:#fff;border-radius:99px;padding:3px 10px;vertical-align:middle}
+.badge.acc{background:var(--acc);color:#1B2A41;border:2px solid #1B2A41}
+.pro-hero{background:#1B2A41;color:#fff;border:2px solid #1B2A41;border-radius:22px;box-shadow:6px 6px 0 var(--shadow);padding:clamp(20px,5vw,34px);display:flex;flex-direction:column;gap:14px}
+.pro-hero h2{font-size:clamp(28px,6vw,40px)}
+.pro-hero p{margin:0;color:#C9CDDA}
+.pro-hero .price{font-family:'Space Grotesk',sans-serif;font-size:clamp(36px,9vw,52px);font-weight:700;color:#fff;line-height:1}
+.pro-hero .price small{font-size:16px;font-weight:500;color:#C9CDDA}
+.pro-hero ul{margin:0;padding-left:20px;color:#EEF1F6}
+.pro-hero input{background:#fff;color:#1B2A41;border-color:#fff;text-transform:uppercase;letter-spacing:.06em}
+.pro-hero label{color:#fff}
+.pro-hero button:not(.pri){background:transparent;color:#fff;border-color:#C9CDDA}
+.msg{font-weight:600;min-height:1.5em;margin:0}
+.list{display:grid;gap:12px;margin-top:18px}
+.list a{display:flex;gap:14px;align-items:center;text-decoration:none;color:var(--ink);background:var(--card);border:2px solid var(--line);border-radius:18px;padding:16px;min-height:72px}
+.list a:hover{background:var(--tint)}
+.list .ic{flex:none;width:46px;height:46px;border-radius:14px;background:var(--tint);border:2px solid var(--line);display:flex;align-items:center;justify-content:center}
+.list b{font-family:'Space Grotesk',sans-serif;font-size:19px;display:block}
+.list span{font-size:14px;color:var(--soft)}
+.list .lk{margin-left:auto;flex:none}
+.lock{border:2px dashed var(--line);border-radius:18px;padding:22px;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center}
+.lock a{font-weight:600;min-height:44px;display:inline-flex;align-items:center}
+.quad{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.quad section{border:2px solid var(--line);border-radius:16px;padding:12px;min-height:150px;display:flex;flex-direction:column;gap:8px;background:var(--bg)}
+.quad section.hot{background:var(--tint)}
+.quad h3{font-size:17px}
+.quad .hint{font-size:13px;color:var(--soft);margin:0}
+.quad ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.quad li{display:flex;align-items:center;gap:6px;background:var(--card);border:2px solid var(--line);border-radius:10px;padding:4px 4px 4px 10px;font-size:15px}
+.quad li span{flex:1;overflow-wrap:anywhere}
+.quad li button{min-height:36px;min-width:36px;padding:0;font-size:15px;border-radius:8px}
+.axis{display:flex;justify-content:space-between;font-size:13px;color:var(--soft);font-weight:600}
+.addrow{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+.toggles{display:flex;flex-wrap:wrap;gap:8px}
+.toggles label{display:flex;align-items:center;gap:8px;margin:0;border:2px solid var(--line);border-radius:12px;padding:8px 12px;min-height:44px;font-weight:500;cursor:pointer}
+.toggles input{width:20px;height:20px;min-height:0;accent-color:var(--acc)}
+.toggles select{width:auto;min-height:44px;padding:8px 12px}
+@media(max-width:420px){.quad{grid-template-columns:minmax(0,1fr)}}
+.sit{display:flex;flex-direction:column;gap:8px}
+.sit button{display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:left;width:100%;border-radius:14px;padding:12px 16px;font-weight:600}
+.sit button[aria-pressed=true]{background:#1B2A41;color:#fff}
+.sit button:disabled{opacity:.6;cursor:default}
+.sit small{font-weight:500;font-size:13px;flex:none}
+.goal{background:var(--tint);border:2px solid var(--line);border-radius:16px;padding:14px 16px}
+.goal b{font-family:'Space Grotesk',sans-serif}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px;counter-reset:s}
+.steps>li{counter-increment:s;display:grid;grid-template-columns:44px minmax(0,1fr);gap:12px}
+.steps>li::before{content:counter(s);width:44px;height:44px;border-radius:99px;background:var(--acc);color:#1B2A41;border:2px solid #1B2A41;display:flex;align-items:center;justify-content:center;font:700 19px 'Space Grotesk',sans-serif}
+.steps h3{font-size:19px;margin:8px 0 4px}
+.steps p{margin:0 0 8px;color:var(--soft)}
+.say{background:var(--card);border:2px solid var(--line);border-radius:16px 16px 16px 4px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start;margin-top:6px}
+.say q{flex:1;quotes:"„" "“"}
+.say button{flex:none;min-height:36px;padding:4px 10px;font-size:13px;border-radius:8px}
+details{border:2px solid var(--line);border-radius:14px;background:var(--bg)}
+details+details{margin-top:8px}
+summary{cursor:pointer;padding:12px 16px;font-weight:600;min-height:44px;list-style-position:outside}
+details[open] summary{border-bottom:2px dashed var(--line)}
+details>div{padding:12px 16px}
+.dd{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.dd div{border:2px solid var(--line);border-radius:14px;padding:12px 14px}
+.dd ul{margin:6px 0 0;padding-left:18px}
+.dd h3{font-size:16px}
+.foot{max-width:760px;margin:20px auto 0;padding:16px;border-top:2px solid var(--line);display:flex;flex-wrap:wrap;gap:4px 20px;align-items:center;font-size:14px;color:var(--soft)}
+.foot a{color:var(--ink);min-height:44px;display:inline-flex;align-items:center}
+.ext{color:#fff;font-weight:600;min-height:48px;display:inline-flex;align-items:center;padding:0 6px}
+.toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:#1B2A41;color:#fff;padding:10px 18px;border-radius:99px;font-weight:600;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9}
+.toast.show{opacity:1}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+<svg aria-hidden="true" width="38" height="38" viewBox="0 0 100 100"><path d="M18 12h64a10 10 0 0 1 10 10v42a10 10 0 0 1-10 10H46l-20 16v-16h-8a10 10 0 0 1-10-10V22a10 10 0 0 1 10-10z" fill="#30A8A2" stroke="#1B2A41" stroke-width="6" stroke-linejoin="round"/><path d="M57 33.5A13 13 0 1 0 57 52.5" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round"/><circle cx="69" cy="50" r="5.5" fill="#1B2A41"/></svg>
+<div><div class="brand">consultio<span> labs</span></div><div style="font-size:14px;color:var(--soft)">Neos Projekt-Toolbox</div></div>
+</header>
+<p class="intro">Kleine Helfer für den Projektalltag – direkt auf deinem Handy, ohne Installation auf dem Dienstrechner.</p>
+
+<nav class="tabs" aria-label="Werkzeuge">
+<a href="#kosten" data-t="kosten"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg>Kosten</a>
+<a href="#check" data-t="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 9l2 2 4-4M8 16h8"/></svg>Meeting-Check</a>
+<a href="#tipp" data-t="tipp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0 0 12 3z"/></svg>Tipp</a>
+<a href="#prompts" data-t="prompts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9l4.2-1.8z"/><path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z"/></svg>Prompts</a>
+<a href="#pro" data-t="pro"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z"/></svg>Pro</a>
+</nav>
+
+<main>
+<!-- 1 KOSTEN -->
+<section class="tool" id="t-kosten" aria-labelledby="h-kosten">
+<div class="card">
+<h2 id="h-kosten">Was kostet dieses Meeting?</h2>
+<p class="sub">Grob schätzen reicht. Keine Namen, keine Firmendaten.</p>
+<div class="big" aria-live="polite"><div class="num" id="k-total">0 €</div><div class="cap" id="k-cap">bei 60 Minuten</div></div>
+<div class="row">
+<div><label for="k-n">Teilnehmende</label><input id="k-n" type="number" inputmode="numeric" min="1" max="200" value="6"></div>
+<div><label for="k-r">Ø Stundensatz in €</label><input id="k-r" type="number" inputmode="numeric" min="0" max="1000" value="75"></div>
+</div>
+<div><label for="k-d">Dauer: <span id="k-dl">60</span> Minuten</label><input id="k-d" type="range" min="5" max="240" step="5" value="60"></div>
+<div class="btns"><button class="pri" id="k-start">Live-Uhr starten</button><button id="k-reset">Zurücksetzen</button></div>
+<div class="facts">
+<div><b id="k-min">0 €</b><span>pro Minute</span></div>
+<div><b id="k-week">0 €</b><span>wenn es jede Woche stattfindet (pro Jahr, 46 Wochen)</span></div>
+<div><b id="k-save">0 €</b><span>gespart, wenn es 15 Minuten kürzer wird</span></div>
+</div>
+<p class="note">Stundensatz = was eine Arbeitsstunde das Unternehmen ungefähr kostet. Ein Richtwert genügt.</p>
+</div>
+</section>
+
+<!-- 2 CHECK -->
+<section class="tool" id="t-check" aria-labelledby="h-check">
+<div class="card">
+<h2 id="h-check">Meeting-Check in 30 Sekunden</h2>
+<p class="sub">Kurz vor dem Termin: Ist das Meeting gut vorbereitet?</p>
+<div class="checks" id="c-list"></div>
+<div><div class="meter" aria-hidden="true"><i id="c-bar" style="width:0"></i></div>
+<p id="c-verdict" style="margin:10px 0 0;font-weight:600" aria-live="polite"></p></div>
+<div><label for="c-goal">Ziel in einem Satz (allgemein formulieren)</label><input id="c-goal" placeholder="z. B. Entscheidung über den nächsten Meilenstein"></div>
+<div><label for="c-agenda">Agenda – ein Punkt pro Zeile</label><textarea id="c-agenda" placeholder="Stand kurz&#10;Optionen&#10;Entscheidung &amp; nächste Schritte"></textarea></div>
+<div class="out" id="c-out"></div>
+<div class="btns"><button class="pri" id="c-copy">Als Einladungstext kopieren</button><button id="c-reset">Leeren</button></div>
+</div>
+</section>
+
+<!-- 3 TIPP -->
+<section class="tool" id="t-tipp" aria-labelledby="h-tipp">
+<div class="card">
+<h2 id="h-tipp">Neos Tipp des Tages</h2>
+<div class="chips" id="p-chips" role="group" aria-label="Thema wählen"></div>
+<article class="tip" aria-live="polite"><span class="tag" id="p-tag"></span><h3 id="p-title"></h3><p id="p-text"></p></article>
+<div class="btns"><button class="pri" id="p-next">Nächster Tipp</button><button id="p-copy">Tipp kopieren</button></div>
+<p class="note" id="p-count"></p>
+</div>
+</section>
+
+<!-- 4 PROMPTS -->
+<section class="tool" id="t-prompts" aria-labelledby="h-prompts">
+<div class="card">
+<h2 id="h-prompts">Prompt-Vorlagen für dein Projekt</h2>
+<p class="sub">Hier füllst du nur allgemeine Angaben aus. Konkrete Projektdetails ergänzt du später im KI-Tool, das deine Firma erlaubt.</p>
+<div><label for="q-sel">Was willst du erledigen?</label><select id="q-sel"></select></div>
+<div id="q-fields" class="row"></div>
+<div class="out" id="q-out"></div>
+<div class="btns"><button class="pri" id="q-copy">Prompt kopieren</button></div>
+<p class="note">Platzhalter in [eckigen Klammern] ersetzt du erst im erlaubten Tool – so bleiben vertrauliche Inhalte aus deinem Handy raus.</p>
+</div>
+</section>
+
+<!-- 5 PRO -->
+<section class="tool" id="t-pro" aria-labelledby="h-pro">
+<div class="pro-hero" id="pro-buy">
+<h2 id="h-pro">Die ganze Toolbox</h2>
+<p>Gesprächsleitfäden und Werkzeuge für die schwierigen Momente im Projekt – einmal zahlen, dauerhaft nutzen.</p>
+<span class="badge acc" style="align-self:flex-start">Einführungspreis</span>
+<div class="price">12 € <small>einmalig</small></div>
+<p>Der Preis steigt, sobald neue Inhalte dazukommen. Wer jetzt kauft, bekommt alle künftigen Updates ohne Aufpreis.</p>
+<ul>
+<li>Gesprächsleitfäden für schwierige Situationen – mit fertigen Formulierungen</li>
+<li>Puffer-Rechner für realistische Schätzungen</li>
+<li>Prioritäten-Matrix zum Sortieren deiner Aufgaben</li>
+<li>Stakeholder-Map – mit Rollen statt Namen</li>
+<li>4 weitere Prompt-Vorlagen und 8 weitere Tipps</li>
+<li>Alle künftigen Leitfäden, Tools und Vorlagen ohne Aufpreis</li>
+</ul>
+<div class="btns"><button class="pri" id="pro-kaufen">Pro kaufen</button><a class="ext" href="https://www.youtube.com/@Consultio_Labs">Neo auf YouTube</a></div>
+<p class="msg" id="pro-kaufmsg" aria-live="polite"></p>
+<div><label for="pro-code">Schon gekauft? Freischaltcode eingeben</label>
+<div style="display:flex;flex-wrap:wrap;gap:10px"><input id="pro-code" placeholder="CL-XXXX-XXXX" autocomplete="off" style="flex:1 1 200px"><button id="pro-unlock">Freischalten</button></div></div>
+<p class="msg" id="pro-msg" aria-live="polite"></p>
+</div>
+<div class="pro-hero" id="pro-done" hidden>
+<span class="badge acc" style="align-self:flex-start">Pro aktiv</span>
+<h2>Danke für deine Unterstützung!</h2>
+<p>Alle Pro-Werkzeuge sind auf diesem Gerät freigeschaltet.</p>
+<div class="btns"><button id="pro-lock">Pro auf diesem Gerät sperren</button></div>
+</div>
+<div class="list" id="pro-list">
+<a href="#leitfaden"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M8.5 10.5h7M8.5 13.5h4"/></svg></span><span><b>Gesprächsleitfäden</b><span>4 schwierige Gespräche – Schritt für Schritt vorbereitet</span></span><span class="lk badge">Pro</span></a>
+<a href="#puffer"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 20h18M6 16V9M12 16V5M18 16v-4"/></svg></span><span><b>Puffer-Rechner</b><span>Drei Schätzungen, eine realistische Dauer</span></span><span class="lk badge">Pro</span></a>
+<a href="#matrix"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 3v18M3 12h18"/></svg></span><span><b>Prioritäten-Matrix</b><span>Wichtig oder dringend? Sortieren in Sekunden</span></span><span class="lk badge">Pro</span></a>
+<a href="#stakeholder"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><circle cx="17" cy="9" r="2.5"/><path d="M2.5 20c.6-3.6 3.3-5.5 6.5-5.5s5.9 1.9 6.5 5.5M15.5 14.6c2.8.1 5 1.8 5.5 5.4"/></svg></span><span><b>Stakeholder-Map</b><span>Wen eng einbinden, wen nur informieren?</span></span><span class="lk badge">Pro</span></a>
+</div>
+</section>
+
+<!-- LEITFADEN -->
+<section class="tool" id="t-leitfaden" aria-labelledby="h-leitfaden">
+<div class="card">
+<h2 id="h-leitfaden">Gesprächsleitfäden <span class="badge">Pro</span></h2>
+<div class="lockwrap"></div>
+<div class="pro-body">
+<p class="sub">Für die fünf Minuten vor dem schwierigen Gespräch. Situation wählen, durchlesen, souverän reingehen.</p>
+<div class="sit" id="l-sit" role="group" aria-label="Situation wählen"></div>
+<div id="l-guide" style="display:flex;flex-direction:column;gap:18px"></div>
+<p class="note">Die Formulierungen sind Vorschläge. Pass sie an deine Sprache und euren Umgangston an.</p>
+</div>
+</div>
+</section>
+
+<!-- PUFFER -->
+<section class="tool" id="t-puffer" aria-labelledby="h-puffer">
+<div class="card">
+<h2 id="h-puffer">Puffer-Rechner <span class="badge">Pro</span></h2>
+<div class="lockwrap"></div>
+<div class="pro-body">
+<p class="sub">Schätze eine Aufgabe dreimal. Daraus wird eine Dauer, mit der du ehrlich planen kannst (Drei-Punkt-Schätzung nach PERT).</p>
+<div class="big" aria-live="polite"><div class="num" id="b-e">0</div><div class="cap" id="b-cap">Tage – realistisch planen</div></div>
+<div class="row">
+<div><label for="b-o">Bester Fall</label><input id="b-o" type="number" inputmode="decimal" min="0" step="0.5" value="5"></div>
+<div><label for="b-m">Wahrscheinlich</label><input id="b-m" type="number" inputmode="decimal" min="0" step="0.5" value="8"></div>
+<div><label for="b-p">Schlechtester Fall</label><input id="b-p" type="number" inputmode="decimal" min="0" step="0.5" value="15"></div>
+<div><label for="b-u">Einheit</label><select id="b-u"><option>Tage</option><option>Stunden</option><option>Wochen</option></select></div>
+</div>
+<div class="facts">
+<div><b id="b-s">0</b><span>mit Sicherheitspuffer – reicht in etwa 5 von 6 Fällen</span></div>
+<div><b id="b-buf">0</b><span>Puffer gegenüber „wahrscheinlich“</span></div>
+</div>
+<p class="msg" id="b-warn" aria-live="polite"></p>
+<div class="out" id="b-out"></div>
+<div class="btns"><button class="pri" id="b-copy">Satz für den Plan kopieren</button></div>
+</div>
+</div>
+</section>
+
+<!-- MATRIX -->
+<section class="tool" id="t-matrix" aria-labelledby="h-matrix">
+<div class="card">
+<h2 id="h-matrix">Prioritäten-Matrix <span class="badge">Pro</span></h2>
+<div class="lockwrap"></div>
+<div class="pro-body" id="m-body"></div>
+</div>
+</section>
+
+<!-- STAKEHOLDER -->
+<section class="tool" id="t-stakeholder" aria-labelledby="h-stakeholder">
+<div class="card">
+<h2 id="h-stakeholder">Stakeholder-Map <span class="badge">Pro</span></h2>
+<div class="lockwrap"></div>
+<div class="pro-body" id="s-body"></div>
+</div>
+</section>
+</main>
+
+<p class="priv"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:2px"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>Kein Login, kein Tracking. Deine Eingaben bleiben auf deinem Gerät.</p>
+<footer class="foot">
+<span>© consultio labs</span>
+<a href="../impressum.html">Impressum</a>
+<a href="../datenschutz.html">Datenschutz</a>
+<a href="../">Zur Startseite</a>
+</footer>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+{
+const $=id=>document.getElementById(id);
+const store={get(k,d){try{const v=localStorage.getItem('neo-'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem('neo-'+k,JSON.stringify(v))}catch(e){}}};
+const eur=v=>new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR',maximumFractionDigits:v<100?2:0}).format(v);
+const toast=m=>{const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1800)};
+const copy=async(txt)=>{try{await navigator.clipboard.writeText(txt);toast('Kopiert')}catch(e){toast('Kopieren nicht möglich – bitte markieren')}};
+
+/* Tabs */
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const TABS=['kosten','check','tipp','prompts','pro','leitfaden','puffer','matrix','stakeholder'];
+const NAVOF={leitfaden:'pro',puffer:'pro',matrix:'pro',stakeholder:'pro'};
+const show=()=>{const h=location.hash.slice(1);const t=TABS.includes(h)?h:'kosten';
+ TABS.forEach(x=>$('t-'+x).classList.toggle('on',x===t));
+ document.querySelectorAll('nav.tabs a').forEach(a=>a.dataset.t===(NAVOF[t]||t)?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current'));
+ if(h&&TABS.includes(h))window.scrollTo(0,0)};
+addEventListener('hashchange',show);show();
+let pro=store.get('pro',false);
+const LOCK='<div class="lock"><b>Dieses Werkzeug gehört zu Pro.</b><span class="note">Einführungspreis: einmal 12 € – inklusive aller künftigen Updates.</span><a href="#pro">Pro freischalten →</a></div>';
+
+/* 1 Kosten */
+const k=store.get('k',{n:6,r:75,d:60});$('k-n').value=k.n;$('k-r').value=k.r;$('k-d').value=k.d;
+let timer=null,start=0,elapsed=0;
+const perMin=()=>Math.max(0,+$('k-n').value||0)*Math.max(0,+$('k-r').value||0)/60;
+const calc=()=>{const d=+$('k-d').value;$('k-dl').textContent=d;const pm=perMin();
+ if(!timer&&!elapsed){$('k-total').textContent=eur(pm*d);$('k-cap').textContent=`bei ${d} Minuten`}
+ $('k-min').textContent=eur(pm);$('k-week').textContent=eur(pm*d*46);$('k-save').textContent=eur(pm*Math.min(15,d));
+ store.set('k',{n:+$('k-n').value,r:+$('k-r').value,d})};
+['k-n','k-r','k-d'].forEach(i=>$(i).addEventListener('input',calc));
+const tick=()=>{const s=(elapsed+(Date.now()-start))/1000;$('k-total').textContent=eur(perMin()*s/60);
+ const m=Math.floor(s/60),ss=String(Math.floor(s%60)).padStart(2,'0');$('k-cap').textContent=`läuft seit ${m}:${ss} Min.`};
+$('k-start').addEventListener('click',()=>{if(timer){clearInterval(timer);timer=null;elapsed+=Date.now()-start;$('k-start').textContent='Weiterlaufen lassen';$('k-cap').textContent+=' – pausiert'}
+ else{start=Date.now();timer=setInterval(tick,250);tick();$('k-start').textContent='Pause'}});
+$('k-reset').addEventListener('click',()=>{clearInterval(timer);timer=null;elapsed=0;$('k-start').textContent='Live-Uhr starten';calc()});
+calc();
+
+/* 2 Check */
+const CHECKS=['Es gibt ein klares Ziel oder eine Entscheidung','Alle Eingeladenen werden wirklich gebraucht','Die Agenda ist vorab verschickt','Unterlagen liegen vorher vor','Es ist klar, wer moderiert und wer protokolliert','Die Zeit ist so kurz wie möglich angesetzt'];
+const c=store.get('c',{v:[],goal:'',agenda:''});
+$('c-list').innerHTML=CHECKS.map((t,i)=>`<label><input type="checkbox" data-i="${i}" ${c.v.includes(i)?'checked':''}>${t}</label>`).join('');
+$('c-goal').value=c.goal;$('c-agenda').value=c.agenda;
+const VERD=['Ehrlich: Brauchst du dieses Meeting? Vielleicht reicht eine Mail.','Noch dünn – Ziel und Agenda zuerst klären.','Auf gutem Weg. Ein, zwei Punkte fehlen noch.','Gut vorbereitet. Das wird ein kurzes Meeting.'];
+const ccalc=()=>{const v=[...document.querySelectorAll('#c-list input:checked')].map(x=>+x.dataset.i);const p=v.length/CHECKS.length;
+ $('c-bar').style.width=(p*100)+'%';$('c-verdict').textContent=`${v.length} von ${CHECKS.length}: `+VERD[p<.34?0:p<.67?1:p<1?2:3];
+ const g=$('c-goal').value.trim(),a=$('c-agenda').value.split('\n').map(s=>s.trim()).filter(Boolean);
+ $('c-out').textContent=`Ziel: ${g||'[Ziel ergänzen]'}\n\nAgenda:\n${a.length?a.map((s,i)=>`${i+1}. ${s}`).join('\n'):'1. [Agendapunkt]'}\n\nBitte vorab: Unterlagen ansehen. Am Ende stehen Entscheidung und nächste Schritte.`;
+ store.set('c',{v,goal:$('c-goal').value,agenda:$('c-agenda').value})};
+$('c-list').addEventListener('change',ccalc);$('c-goal').addEventListener('input',ccalc);$('c-agenda').addEventListener('input',ccalc);
+$('c-copy').addEventListener('click',()=>copy($('c-out').textContent));
+$('c-reset').addEventListener('click',()=>{document.querySelectorAll('#c-list input').forEach(x=>x.checked=false);$('c-goal').value='';$('c-agenda').value='';ccalc()});
+ccalc();
+
+/* 3 Tipp */
+const TIPS=[
+['Meetings','Mit der Entscheidung beginnen','Schreib in die Einladung, was am Ende entschieden sein soll. Dann weiß jede:r, wofür die Zeit da ist.'],
+['Meetings','25 statt 30 Minuten','Setz Termine 5 Minuten kürzer an. So bleibt Luft zwischen zwei Meetings – und niemand kommt zu spät.'],
+['Meetings','Protokoll in drei Zeilen','Entscheidungen, To-dos mit Namen und Datum, offene Fragen. Mehr braucht ein Protokoll selten.'],
+['Meetings','Erst lesen, dann reden','Schick Unterlagen vorher und starte mit 3 Minuten stillem Lesen. Die Diskussion wird deutlich fokussierter.'],
+['Planung','Die Zwei-Minuten-Regel','Was in unter zwei Minuten erledigt ist, machst du sofort. Alles andere kommt auf die Liste.'],
+['Planung','Puffer gehört in den Plan','Plane nicht mit dem besten Fall. Frag dich: Was ist realistisch, was ist der schlechteste Fall? Plane dazwischen.'],
+['Planung','Drei Dinge pro Tag','Leg morgens drei Aufgaben fest, die heute wirklich zählen. Der Rest ist Bonus.'],
+['Planung','Fokuszeit blocken','Trag dir feste Blöcke ohne Meetings in den Kalender ein – und verteidige sie wie einen Kundentermin.'],
+['Stakeholder','Früh fragen statt spät erklären','Hol wichtige Leute vor der großen Runde einzeln ab. Überraschungen im Lenkungskreis vermeidest du so.'],
+['Stakeholder','Schlechte Nachrichten mit Plan','Bring zu jedem Problem eine Option mit, besser zwei. So wird aus einer Hiobsbotschaft eine Entscheidungsvorlage.'],
+['Stakeholder','Erwartungen aufschreiben','Halte nach jedem Abstimmungsgespräch schriftlich fest, was vereinbart wurde. Ein Zwei-Zeilen-Mail reicht.'],
+['Stakeholder','„Ja, und …“ statt „Nein“','Wenn ein neuer Wunsch kommt: „Ja, und dafür verschiebt sich X“. So bleibt die Entscheidung bei der richtigen Person.'],
+['KI','Rolle, Aufgabe, Format','Gib der KI eine Rolle, eine klare Aufgabe und das gewünschte Format. Schon werden Antworten brauchbarer.'],
+['KI','Erst Entwurf, dann Feinschliff','Lass dir von der KI einen ersten Entwurf geben und überarbeite ihn selbst. Das leere Blatt ist der größte Zeitfresser.'],
+['KI','Keine vertraulichen Daten','Gib nur in freigegebene Tools echte Projektdaten ein. Für alles andere: mit Platzhaltern arbeiten.'],
+['KI','Nach Gegenargumenten fragen','Frag die KI: „Was spricht gegen meinen Plan?“ Sie findet oft blinde Flecken, bevor es dein Chef tut.']];
+const PRO_TIPS=[
+['Meetings','Der letzte Satz zählt','Beende jedes Meeting mit: „Wer macht was bis wann?“ Wenn darauf keine Antwort kommt, war es eine Diskussion – kein Meeting.'],
+['Meetings','Parkplatz statt Abschweifen','Führ eine sichtbare Liste für Themen, die nicht auf die Agenda gehören. Niemand fühlt sich abgewürgt, und du bleibst im Zeitplan.'],
+['Planung','Meilensteine als Ergebnis','Formuliere Meilensteine als Zustand: „Konzept ist freigegeben“ statt „Konzept schreiben“. So ist klar, wann er erreicht ist.'],
+['Planung','Abhängigkeiten zuerst','Frag bei jeder Aufgabe: Auf wen warte ich? Wer wartet auf mich? Die meisten Verzögerungen stecken genau dort.'],
+['Stakeholder','Die richtige Flughöhe','Die Geschäftsführung will Entscheidungen und Risiken, das Team Details. Ein Bericht für alle passt meist keinem.'],
+['Stakeholder','Stille ist kein Ja','Wer im Meeting nichts sagt, ist nicht unbedingt einverstanden. Frag gezielt nach – besonders bei Betroffenen.'],
+['KI','Beispiele mitgeben','Zeig der KI ein Beispiel für das gewünschte Ergebnis. Ein gutes Muster wirkt oft besser als eine lange Beschreibung.'],
+['KI','Ergebnis immer prüfen','KI klingt sicher, auch wenn sie danebenliegt. Zahlen, Namen und Fakten prüfst du selbst, bevor etwas rausgeht.']];
+const THEMES=['Alle','Meetings','Planung','Stakeholder','KI'];
+let theme=store.get('theme','Alle');
+const dayIdx=Math.floor(Date.now()/864e5);let off=0;
+const pool=()=>TIPS.concat(pro?PRO_TIPS:[]).filter(t=>theme==='Alle'||t[0]===theme);
+const renderTip=()=>{const p=pool();const t=p[(dayIdx+off)%p.length];$('p-tag').textContent=t[0];$('p-title').textContent=t[1];$('p-text').textContent=t[2];
+ const extra=PRO_TIPS.filter(t=>theme==='Alle'||t[0]===theme).length;
+ $('p-count').textContent=`${p.length} Tipps in diesem Thema · jeden Tag ein neuer`+(pro?'':` · ${extra} weitere mit Pro`);
+ document.querySelectorAll('#p-chips button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.th===theme))};
+$('p-chips').innerHTML=THEMES.map(t=>`<button type="button" data-th="${t}">${t}</button>`).join('');
+$('p-chips').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;theme=b.dataset.th;off=0;store.set('theme',theme);renderTip()});
+$('p-next').addEventListener('click',()=>{off++;renderTip()});
+$('p-copy').addEventListener('click',()=>copy(`${$('p-title').textContent} – ${$('p-text').textContent} (Neos Projekt-Toolbox, consultio labs)`));
+renderTip();
+
+/* 4 Prompts */
+const PROMPTS=[
+{n:'Statusbericht formulieren',f:[['Adressat','Lenkungskreis'],['Ampel','Gelb'],['Länge','maximal 10 Zeilen']],
+ t:v=>`Du bist erfahrene:r Projektleiter:in. Formuliere einen Statusbericht für ${v[0]}.\nGesamtstatus: ${v[1]}.\nGliederung: 1) Kurzfazit in einem Satz, 2) Fortschritt seit letztem Bericht, 3) Risiken & Probleme mit Gegenmaßnahme, 4) Entscheidungsbedarf, 5) nächste Schritte.\nLänge: ${v[2]}. Sachlich, ohne Beschönigung.\n\nHier meine Stichpunkte:\n[Stichpunkte einfügen]`},
+{n:'Meeting-Protokoll zusammenfassen',f:[['Meeting-Art','Jour fixe'],['Leser:innen','Projektteam']],
+ t:v=>`Fasse die folgenden Notizen aus unserem ${v[0]} für ${v[1]} zusammen.\nStruktur: Entscheidungen, To-dos (Wer? Bis wann?), offene Fragen.\nMarkiere fehlende Verantwortliche oder Termine mit "⚠ fehlt".\n\nNotizen:\n[Notizen einfügen]`},
+{n:'Risiken finden',f:[['Projektart','Software-Einführung'],['Phase','Planung']],
+ t:v=>`Wir planen eine ${v[0]} und sind in der Phase "${v[1]}".\nNenne die 8 häufigsten Risiken für so ein Vorhaben. Für jedes Risiko: Beschreibung, Frühwarnzeichen, eine konkrete Gegenmaßnahme.\nAls Tabelle.\n\nZusätzlicher Kontext:\n[Rahmenbedingungen einfügen]`},
+{n:'Schwierige Mail entschärfen',f:[['Empfänger','Fachbereichsleitung'],['Ton','freundlich, aber klar']],
+ t:v=>`Überarbeite meinen Mailentwurf an die ${v[0]}.\nTon: ${v[1]}. Entferne Vorwürfe, behalte die Kernaussage, schlage am Ende einen konkreten nächsten Schritt vor.\nGib mir zwei Varianten: kurz und ausführlich.\n\nEntwurf:\n[Entwurf einfügen]`},
+{n:'Gegenargumente prüfen',f:[['Vorhaben','Umstellung auf zweiwöchige Sprints']],
+ t:v=>`Ich möchte folgendes vorschlagen: ${v[0]}.\nSpiele den kritischsten Stakeholder. Nenne die 5 stärksten Einwände und wie ich jeweils überzeugend darauf antworte.\n\nMein bisheriges Argument:\n[Argument einfügen]`},
+{pro:1,n:'Projektauftrag entwerfen',f:[['Vorhaben','Einführung eines neuen Ticketsystems'],['Dauer','6 Monate']],
+ t:v=>`Erstelle den Entwurf eines Projektauftrags für: ${v[0]} (geplante Dauer: ${v[1]}).\nAbschnitte: Ausgangslage, Ziele (messbar), Nicht-Ziele, Lieferergebnisse, Meilensteine, Rollen, Risiken, Budgetrahmen.\nMarkiere alles, was ich noch klären muss, mit "[offen]".\n\nBekannte Eckdaten:\n[Eckdaten einfügen]`},
+{pro:1,n:'Lessons Learned moderieren',f:[['Teilnehmende','Kernteam'],['Zeit','60 Minuten']],
+ t:v=>`Plane einen Lessons-Learned-Workshop mit dem ${v[0]} in ${v[1]}.\nGib mir: Ablauf mit Zeiten, 3 Leitfragen pro Block, eine Methode für ruhige Teilnehmende und eine Vorlage, um Maßnahmen festzuhalten.\n\nWas im Projekt besonders lief:\n[Stichpunkte einfügen]`},
+{pro:1,n:'Kickoff-Agenda bauen',f:[['Projektart','interne Prozessoptimierung'],['Format','vor Ort, halber Tag']],
+ t:v=>`Erstelle eine Kickoff-Agenda für ein Projekt zur ${v[0]}. Format: ${v[1]}.\nZiele des Kickoffs: gemeinsames Verständnis, Rollen klären, Spielregeln vereinbaren, erste Schritte festlegen.\nMit Zeitangaben, verantwortlicher Rolle und benötigtem Material pro Punkt.`},
+{pro:1,n:'Change Request bewerten',f:[['Änderungswunsch','zusätzliche Berichtsfunktion'],['Projektphase','Umsetzung']],
+ t:v=>`Bewerte den Änderungswunsch "${v[0]}" in der Projektphase ${v[1]}.\nStruktur: Nutzen, Auswirkung auf Zeit, Kosten, Qualität und Risiken, betroffene Rollen, Empfehlung (annehmen / später / ablehnen) mit Begründung.\nFormuliere zum Schluss eine kurze Entscheidungsvorlage.\n\nDetails:\n[Details einfügen]`}];
+const q=store.get('q',{i:0,v:{}});
+const fields=()=>{const p=PROMPTS[+$('q-sel').value];const saved=q.v[$('q-sel').value]||[];
+ if(p.pro&&!pro){$('q-fields').innerHTML=LOCK;$('q-out').hidden=true;$('q-copy').disabled=true;return}
+ $('q-out').hidden=false;$('q-copy').disabled=false;
+ $('q-fields').innerHTML=p.f.map((f,i)=>`<div><label for="q-f${i}">${f[0]}</label><input id="q-f${i}"></div>`).join('');
+ p.f.forEach((f,i)=>{$('q-f'+i).value=saved[i]??f[1];$('q-f'+i).addEventListener('input',qcalc)});qcalc()};
+const qcalc=()=>{const i=+$('q-sel').value,p=PROMPTS[i];const v=p.f.map((f,j)=>$('q-f'+j).value.trim()||`[${f[0]}]`);
+ $('q-out').textContent=p.t(v);q.i=i;q.v[i]=p.f.map((f,j)=>$('q-f'+j).value);store.set('q',q)};
+$('q-sel').addEventListener('change',fields);
+$('q-copy').addEventListener('click',()=>copy($('q-out').textContent));
+const fillSel=()=>{const cur=$('q-sel').value||q.i;$('q-sel').innerHTML=PROMPTS.map((p,i)=>`<option value="${i}">${p.n}${p.pro&&!pro?' (Pro)':''}</option>`).join('');$('q-sel').value=cur;fields()};
+
+/* Pro: Puffer */
+const bcalc=()=>{const o=+$('b-o').value||0,m=+$('b-m').value||0,p=+$('b-p').value||0,u=$('b-u').value;
+ const e=(o+4*m+p)/6,sd=Math.max(0,(p-o)/6),s=e+sd,r=x=>x.toLocaleString('de-DE',{maximumFractionDigits:1});
+ $('b-e').textContent=r(e);$('b-cap').textContent=`${u} – realistisch planen`;$('b-s').textContent=`${r(s)} ${u}`;$('b-buf').textContent=`+${r(Math.max(0,s-m))} ${u}`;
+ $('b-warn').textContent=(o>m||m>p)?'Hinweis: Bester Fall ≤ wahrscheinlich ≤ schlechtester Fall – bitte prüfen.':'';
+ $('b-out').textContent=`Realistisch rechnen wir mit ${r(e)} ${u}. Mit Puffer planen wir ${r(s)} ${u} ein (Schätzung: bester Fall ${r(o)}, wahrscheinlich ${r(m)}, schlechtester Fall ${r(p)}).`;
+ store.set('b',{o,m,p,u})};
+const b=store.get('b',null);if(b){$('b-o').value=b.o;$('b-m').value=b.m;$('b-p').value=b.p;$('b-u').value=b.u}
+['b-o','b-m','b-p','b-u'].forEach(i=>$(i).addEventListener('input',bcalc));
+$('b-copy').addEventListener('click',()=>copy($('b-out').textContent));bcalc();
+
+/* Pro: Gesprächsleitfäden */
+const GUIDES=[
+{n:'Chef will den Termin vorziehen',
+ goal:'Nicht „Ja“ oder „Nein“ sagen, sondern eine Entscheidung über Optionen herbeiführen. Ein früherer Termin ist fast immer möglich – nur nicht zum gleichen Preis an Umfang, Aufwand oder Risiko.',
+ prep:['Was kann bis zum neuen Termin realistisch fertig sein – und was nicht?','Was würde es kosten, alles zu schaffen? (Leute, Überstunden, externe Hilfe)','Was ist das Mindeste, mit dem der Chef am neuen Termin trotzdem etwas Sinnvolles hätte?'],
+ steps:[
+ ['Den Grund verstehen','Hinter einem vorgezogenen Termin steckt fast immer ein Anlass – ein Kundentermin, eine Vorstandssitzung, Druck von oben. Wenn du ihn kennst, findest du bessere Lösungen.','Verstehe. Was ist der Anlass für den früheren Termin? Was genau muss bis dahin stehen?'],
+ ['Nicht sofort zusagen','Ein schnelles „Kriegen wir hin“ wird später zum Problem. Bitte um kurze Bedenkzeit – das wirkt professionell, nicht ausweichend.','Ich möchte dir keine Zusage geben, die ich nicht halten kann. Lass mich das kurz durchrechnen – ich melde mich bis morgen Mittag mit Optionen.'],
+ ['Die Lage ehrlich zeigen','Sachlich, ohne Jammern: was mit dem neuen Termin geht und was nicht. Zahlen und Fakten statt Gefühl.','Bis zum neuen Termin schaffen wir die Teile A und B sicher. Für C fehlen uns nach jetzigem Stand etwa zwei Wochen.'],
+ ['Optionen anbieten','Biete mindestens zwei Wege an. So entscheidet dein Chef – und trägt die Entscheidung mit.','Ich sehe drei Möglichkeiten: Wir liefern zum neuen Termin einen ersten Teil und den Rest später. Oder wir holen uns Unterstützung, das kostet zusätzlich. Oder wir bleiben beim ursprünglichen Termin. Was ist dir am wichtigsten?'],
+ ['Entscheidung festhalten','Erst wenn eine Option gewählt ist, ist das Gespräch fertig. Schick direkt danach eine kurze Mail – unten kannst du sie dir zusammenstellen.','Gut, dann halten wir fest: Option 1. Ich schick dir gleich eine kurze Zusammenfassung, damit wir beide vom Gleichen ausgehen.']],
+ obj:[
+ ['„Das muss einfach gehen.“','Nicht diskutieren, ob es geht – sondern was dafür wegfällt.','Ich will es möglich machen. Dann sag mir bitte, was dafür nach hinten rutschen darf.'],
+ ['„Dann macht halt Überstunden.“','Kurzfristig eine Option, auf Dauer ein Risiko. Benenne die Grenze klar.','Für ein, zwei Wochen können wir das abfangen. Länger steigt das Fehlerrisiko deutlich – das sollten wir bewusst entscheiden.'],
+ ['„Warum habt ihr keinen Puffer eingeplant?“','Nicht rechtfertigen. Der Puffer war für Unvorhergesehenes gedacht, nicht für einen neuen Termin.','Den Puffer haben wir – er ist für Risiken im Projekt gedacht. Wenn wir ihn jetzt für den früheren Termin nutzen, fehlt er uns, falls etwas schiefgeht.'],
+ ['„Das andere Team schafft das auch.“','Vergleiche ruhig aufnehmen und auf die Fakten zurückführen.','Gut möglich, dass die Ausgangslage dort anders ist. Bei uns hängt es konkret an diesen Punkten – lass uns die anschauen.']],
+ good:['Ruhig bleiben, Verständnis zeigen','Fakten statt Bauchgefühl','Immer mit Optionen kommen','Entscheidung schriftlich festhalten'],
+ bad:['Spontan zusagen','„Das geht nicht“ ohne Alternative','Das Team oder andere beschuldigen','Ohne Entscheidung auseinandergehen'],
+ fields:[['Bisheriger Termin','z. B. 30. Juni'],['Neuer Termin','z. B. 15. Juni']],
+ opts:['Teillieferung zum neuen Termin','Zusätzliche Unterstützung','Beim bisherigen Termin bleiben'],
+ mail:(v,o)=>{const[a,n]=v;return `Betreff: Unsere Abstimmung zum Termin\n\nHallo [Name],\n\ndanke für das Gespräch eben. Kurz zusammengefasst, damit wir vom Gleichen ausgehen:\n\nWir haben vereinbart: ${[
+ `wir liefern zum ${n} einen ersten Teil (A und B). Die restlichen Punkte folgen wie geplant zum ${a}.`,
+ `wir halten den ${n} und holen uns dafür zusätzliche Unterstützung. Ich kläre bis [Datum], wer das sein kann und was es kostet.`,
+ `wir bleiben beim bisherigen Termin am ${a}. Zum ${n} gebe ich dir einen Zwischenstand.`][o]}\n\nFalls ich etwas falsch verstanden habe, sag mir bitte bis [Datum] Bescheid.\n\nViele Grüße\n[Dein Name]`}},
+
+{n:'Der Umfang wächst ständig',
+ goal:'Jeden neuen Wunsch sichtbar machen und bewusst entscheiden lassen – statt ihn still „mal eben“ mitzunehmen. Nicht die Wünsche sind das Problem, sondern dass keiner über ihren Preis entscheidet.',
+ prep:['Welche zusätzlichen Wünsche sind seit Projektstart dazugekommen? Liste sie auf.','Was kosten sie zusammen grob an Zeit und Aufwand?','Wer darf Änderungen am Umfang eigentlich freigeben?'],
+ steps:[
+ ['Den Wunsch ernst nehmen','Wer einen Wunsch äußert, will meist etwas verbessern. Zeig, dass du ihn verstanden hast – ohne ihn sofort zuzusagen.','Das klingt sinnvoll, danke. Ich nehme es auf und schaue mir an, was es für unseren Plan bedeutet.'],
+ ['Alles sichtbar machen','Einzelne Wünsche wirken klein. Erst die Summe zeigt, warum der Plan wackelt. Sammle sie an einer Stelle.','Mir ist aufgefallen: In den letzten Wochen sind sechs zusätzliche Wünsche dazugekommen. Zusammen sind das ungefähr zwei Wochen Arbeit.'],
+ ['Die Folgen benennen','Mach klar, dass mehr Umfang etwas kostet – Zeit, Geld oder etwas anderes, das dafür wegfällt.','Wenn wir das alles zusätzlich umsetzen, verschiebt sich der Termin. Oder wir lassen dafür etwas aus dem ursprünglichen Plan weg.'],
+ ['Priorisieren lassen','Nicht du entscheidest, was wichtiger ist, sondern wer das Projekt beauftragt. Gib die Wahl zurück.','Was davon ist dir wichtiger als das, was wir ursprünglich geplant haben? Dann tauschen wir.'],
+ ['Eine Spielregel vereinbaren','Damit es nicht wieder passiert: ein einfacher Weg, wie neue Wünsche künftig entschieden werden.','Lass uns vereinbaren: Neue Wünsche sammle ich, und einmal pro Woche entscheiden wir gemeinsam, was davon reinkommt.']],
+ obj:[
+ ['„Das ist doch nur eine Kleinigkeit.“','Einzeln stimmt das oft. Zeig die Summe.','Einzeln ja. Zusammen sind es inzwischen etliche – deshalb möchte ich sie einmal gemeinsam anschauen.'],
+ ['„Das war doch von Anfang an so gemeint.“','Nicht streiten, wer recht hat. Unterschiedliches Verständnis klären und neu festhalten.','Kann gut sein, dass wir das unterschiedlich verstanden haben. Lass uns jetzt festhalten, was genau dazugehört.'],
+ ['„Dafür haben wir kein zusätzliches Budget.“','Dann bleibt nur tauschen statt draufpacken.','Verstehe. Dann lass uns gemeinsam entscheiden, was dafür aus dem bisherigen Plan rausgeht.'],
+ ['„Du bist aber unflexibel.“','Flexibel heißt nicht, alles stillschweigend zu schlucken.','Ich will flexibel sein – deshalb sage ich offen, was eine Änderung kostet. Dann können wir gut entscheiden.']],
+ good:['Wünsche wertschätzen','Alle Änderungen an einer Stelle sammeln','Folgen in Zeit oder Aufwand benennen','Entscheidung beim Auftraggeber lassen'],
+ bad:['Wünsche nebenbei „mal eben“ erledigen','Pauschal ablehnen','Die Summe erst am Ende zeigen','Ohne klare Regel weitermachen'],
+ fields:[['Neuer Wunsch (kurz)','z. B. zusätzlicher Export'],['Was dafür weicht','z. B. Auswertung B']],
+ opts:['Wird umgesetzt, dafür entfällt etwas','Kommt in eine spätere Phase','Wird nicht umgesetzt'],
+ mail:(v,o)=>{const[w,x]=v;return `Betreff: Entscheidung zum Änderungswunsch\n\nHallo [Name],\n\ndanke für die Abstimmung. Kurz festgehalten:\n\nZum Wunsch „${w}“ haben wir entschieden: ${[
+ `Er wird umgesetzt. Dafür entfällt bzw. verschiebt sich: ${x}.`,
+ `Er kommt in eine spätere Phase und wird nach dem aktuellen Meilenstein neu bewertet.`,
+ `Er wird in diesem Projekt nicht umgesetzt. Ich habe ihn für später notiert.`][o]}\n\nAb sofort sammle ich neue Wünsche und wir entscheiden [wöchentlich] gemeinsam, was reinkommt.\n\nViele Grüße\n[Dein Name]`}},
+
+{n:'Jemand im Team liefert nicht',
+ goal:'Die Ursache verstehen und eine klare, gemeinsame Vereinbarung treffen – ohne die Person bloßzustellen. Meist steckt Überlastung oder Unklarheit dahinter, selten böser Wille.',
+ prep:['Welche konkreten Beispiele gibt es? Was war wann vereinbart – und was ist passiert?','Was bedeutet das für das Projekt?','Welche Gründe könnte es geben? (zu viel auf dem Tisch, unklare Aufgabe, andere Prioritäten von der Führungskraft)'],
+ steps:[
+ ['Unter vier Augen ansprechen','Nie vor der Gruppe. Such dir einen ruhigen Moment und mach klar, dass es um eine gemeinsame Lösung geht.','Hast du kurz Zeit? Ich möchte mit dir über die Aufgabe sprechen – mir ist wichtig, dass wir das gemeinsam hinbekommen.'],
+ ['Beobachtung statt Vorwurf','Beschreibe, was passiert ist und welche Folgen es hat. Keine Bewertung der Person.','Wir hatten den Entwurf für letzten Freitag vereinbart, er ist noch nicht da. Dadurch kann das Team mit dem nächsten Schritt nicht anfangen.'],
+ ['Zuhören','Frag nach – und lass Raum für die Antwort. Oft erfährst du hier das eigentliche Problem.','Was steht dir gerade im Weg?'],
+ ['Gemeinsam lösen','Biete Unterstützung an, wo du sie geben kannst. Manchmal musst du Prioritäten mit der Führungskraft klären.','Was brauchst du, damit es klappt? Soll ich mit deiner Führungskraft klären, was gerade Vorrang hat?'],
+ ['Konkret vereinbaren','Ein neues Datum und ein Zwischenstand. So merkt ihr beide früh, ob es klappt.','Dann halten wir fest: Du schickst mir den Entwurf bis Mittwoch, und am Dienstag schauen wir kurz auf den Zwischenstand.']],
+ obj:[
+ ['„Ich hab einfach zu viel auf dem Tisch.“','Ernst nehmen. Das ist ein Ressourcenproblem, kein Charakterproblem.','Danke, dass du das offen sagst. Lass uns schauen, was du abgeben oder verschieben kannst – oder ob ich das mit deiner Führungskraft kläre.'],
+ ['„Mir war nicht klar, dass das so dringend ist.“','Möglicherweise stimmt das. Verantwortung teilen und Klarheit schaffen.','Dann habe ich das nicht deutlich genug gesagt. Lass uns jetzt klar festhalten, bis wann was nötig ist.'],
+ ['„Andere liefern auch nicht.“','Nicht ablenken lassen – aber zusagen, dass du das auch klärst.','Das schaue ich mir separat an. In diesem Gespräch geht es um unsere Vereinbarung.'],
+ ['Es passiert wiederholt','Freundlich bleiben, aber deutlich werden – auch über nächste Schritte.','Das ist jetzt das zweite Mal, dass es nicht klappt. Wenn wir es gemeinsam nicht lösen, muss ich das mit deiner Führungskraft besprechen. Das möchte ich eigentlich vermeiden.']],
+ good:['Früh ansprechen, nicht warten','Unter vier Augen','Konkrete Beispiele statt Pauschalurteil','Datum und Zwischenstand vereinbaren'],
+ bad:['Vor der Gruppe kritisieren','„Immer“ und „nie“ sagen','Die Aufgabe still selbst übernehmen','Ohne Vereinbarung auseinandergehen'],
+ fields:[['Aufgabe (kurz)','z. B. Entwurf Konzept'],['Neue Frist','z. B. Mittwoch'],['Zwischenstand am','z. B. Dienstag']],
+ opts:['Keine zusätzliche Unterstützung nötig','Ich kläre Prioritäten mit der Führungskraft','Ein Teil der Aufgabe wird abgegeben'],
+ mail:(v,o)=>{const[t,f,z]=v;return `Betreff: Unsere Vereinbarung zu ${t}\n\nHallo [Name],\n\ndanke für das offene Gespräch. Wie besprochen:\n\n– ${t} bis ${f}\n– kurzer Zwischenstand am ${z}\n– ${[
+ 'Du kommst so zurecht – melde dich bitte, falls sich etwas ändert.',
+ 'Ich kläre mit deiner Führungskraft, was gerade Vorrang hat, und gebe dir Bescheid.',
+ 'Den Teil [Teilaufgabe] übernimmt [Rolle], damit du dich auf den Rest konzentrieren kannst.'][o]}\n\nWenn etwas dazwischenkommt, sag mir bitte früh Bescheid – dann finden wir eine Lösung.\n\nViele Grüße\n[Dein Name]`}},
+
+{n:'Ich muss einen Verzug melden',
+ goal:'Früh, ehrlich und mit einem Plan kommen – damit aus der schlechten Nachricht eine Entscheidung wird. Je früher du meldest, desto mehr Optionen gibt es noch.',
+ prep:['Wie groß ist der Verzug wirklich – realistisch, nicht schöngerechnet?','Was ist die Ursache, in einem Satz?','Welche zwei, drei Optionen gibt es, und was folgt jeweils daraus?'],
+ steps:[
+ ['Früh und direkt melden','Nicht abwarten, bis es keiner mehr übersehen kann. Wer früh kommt, wirkt souverän.','Ich möchte dich frühzeitig informieren: Nach jetzigem Stand halten wir den geplanten Termin nicht.'],
+ ['Erst Klartext, dann Erklärung','Die Zahl zuerst, dann der Grund. Kein langer Anlauf, der die Nachricht versteckt.','Wir rechnen mit etwa zwei Wochen Verzug. Der Hauptgrund: Eine Zulieferung kam deutlich später als geplant.'],
+ ['Verantwortung übernehmen','Keine Schuldzuweisung. Zeig, dass du die Lage im Griff hast und daraus lernst.','Das hätten wir früher erkennen können. Wir haben unsere Planung angepasst, damit uns das nicht noch mal passiert.'],
+ ['Optionen mit Empfehlung','Komm nicht nur mit dem Problem, sondern mit Wegen – und sag, welchen du empfiehlst.','Wir können den Termin verschieben oder zum geplanten Termin einen Teil liefern. Ich empfehle die Teillieferung, weil das Wichtigste dann pünktlich da ist.'],
+ ['Rhythmus vereinbaren','Nach einer schlechten Nachricht braucht es Vertrauen. Regelmäßige kurze Updates schaffen es.','Ich halte dich ab jetzt jeden Freitag kurz auf dem Laufenden, bis wir wieder im Plan sind.']],
+ obj:[
+ ['„Warum erfahre ich das erst jetzt?“','Berechtigt. Nicht rechtfertigen, sondern erklären und Besserung zusagen.','Verständliche Frage. Klar geworden ist es diese Woche – deshalb komme ich sofort. Künftig melde ich mich schon bei ersten Anzeichen.'],
+ ['„Wer ist schuld?“','Den Blick auf die Lösung lenken. Ursachen später in Ruhe klären.','Mir geht es jetzt darum, den Schaden klein zu halten. Die Ursachen schauen wir uns in Ruhe im Rückblick an.'],
+ ['„Geht das nicht doch schneller?“','Nur zu einem Preis. Den benennen.','Schneller geht es nur mit zusätzlicher Unterstützung oder weniger Umfang. Das wäre eine weitere Option, die wir bewusst entscheiden müssten.'],
+ ['„Was sage ich jetzt nach oben?“','Hilf deinem Gegenüber, die Nachricht weiterzugeben.','Ich bereite dir die Lage und die Optionen auf einer Seite vor, die du direkt weitergeben kannst.']],
+ good:['Früh melden','Zahl und Grund zuerst','Optionen mit Empfehlung mitbringen','Regelmäßige Updates zusagen'],
+ bad:['Abwarten und hoffen','Schönrechnen','Schuld bei anderen suchen','Nur das Problem bringen, keine Lösung'],
+ fields:[['Geplanter Termin','z. B. 30. Juni'],['Neuer realistischer Termin','z. B. 14. Juli'],['Grund (ein Satz)','z. B. Zulieferung kam später als geplant']],
+ opts:['Termin wird verschoben','Teillieferung zum geplanten Termin','Zusätzliche Unterstützung, Termin bleibt'],
+ mail:(v,o)=>{const[a,n,g]=v;return `Betreff: Aktueller Stand zum Termin ${a}\n\nHallo [Name],\n\nwie besprochen fasse ich kurz zusammen:\n\n– Der geplante Termin am ${a} ist nach jetzigem Stand nicht zu halten.\n– Grund: ${g}.\n– Vereinbart: ${[
+ `Wir verschieben auf den ${n}.`,
+ `Zum ${a} liefern wir einen ersten Teil, der Rest folgt bis ${n}.`,
+ `Wir holen uns zusätzliche Unterstützung und halten den ${a}. Kosten und Personen kläre ich bis [Datum].`][o]}\n\nIch halte dich ab jetzt jeden [Freitag] kurz auf dem Laufenden.\n\nViele Grüße\n[Dein Name]`}}];
+
+let gi=store.get('guide',0);if(!GUIDES[gi])gi=0;
+const say=t=>`<div class="say"><q>${esc(t)}</q><button type="button" class="cp">Kopieren</button></div>`;
+const renderGuide=()=>{const g=GUIDES[gi];
+ $('l-sit').innerHTML=GUIDES.map((x,i)=>`<button type="button" data-g="${i}" aria-pressed="${i===gi}">${esc(x.n)}<small>${i===gi?'geöffnet':'öffnen'}</small></button>`).join('');
+ $('l-guide').innerHTML=`<div class="goal"><b>Dein Ziel:</b> ${esc(g.goal)}</div>
+<details><summary>Vor dem Gespräch: 3 Dinge klären</summary><div><div class="checks">${g.prep.map(p=>`<label><input type="checkbox">${esc(p)}</label>`).join('')}</div></div></details>
+<ol class="steps">${g.steps.map(s=>`<li><div><h3>${esc(s[0])}</h3><p>${esc(s[1])}</p>${say(s[2])}</div></li>`).join('')}</ol>
+<h3 style="font-size:21px">Wenn es Gegenwind gibt</h3>
+<div>${g.obj.map(o=>`<details><summary>${esc(o[0])}</summary><div><p style="margin:0 0 8px">${esc(o[1])}</p>${say(o[2])}</div></details>`).join('')}</div>
+<div class="dd"><div><h3>Das hilft</h3><ul>${g.good.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div><div><h3>Das vermeiden</h3><ul>${g.bad.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div></div>
+<h3 style="font-size:21px">Die Mail danach</h3>
+<div class="row">${g.fields.map((f,i)=>`<div><label for="l-f${i}">${esc(f[0])}</label><input id="l-f${i}" placeholder="${esc(f[1])}"></div>`).join('')}
+<div><label for="l-opt">Vereinbart</label><select id="l-opt">${g.opts.map((o,i)=>`<option value="${i}">${esc(o)}</option>`).join('')}</select></div></div>
+<div class="out" id="l-out"></div>
+<div class="btns"><button class="pri" type="button" id="l-copy">Mail kopieren</button></div>`;
+ lcalc()};
+const lcalc=()=>{const g=GUIDES[gi];const v=g.fields.map((f,i)=>{const el=$('l-f'+i);return (el&&el.value.trim())||`[${f[0]}]`});
+ $('l-out').textContent=g.mail(v,+$('l-opt').value)};
+$('l-sit').addEventListener('click',e=>{const b=e.target.closest('[data-g]');if(!b)return;gi=+b.dataset.g;store.set('guide',gi);renderGuide();$('l-guide').scrollIntoView({block:'start'})});
+$('l-guide').addEventListener('input',e=>{if(e.target.matches('input:not([type=checkbox]),select'))lcalc()});
+$('l-guide').addEventListener('change',e=>{if(e.target.matches('select'))lcalc()});
+$('l-guide').addEventListener('click',e=>{const c=e.target.closest('.cp');if(c)copy(c.previousElementSibling.textContent);if(e.target.id==='l-copy')copy($('l-out').textContent)});
+renderGuide();
+/* Pro: Vier-Felder-Werkzeuge */
+const quadTool=(el,c)=>{let items=store.get(c.key,c.sample);
+ const save=()=>store.set(c.key,items);
+ const qi=it=>c.quads.findIndex(x=>x.a===it.a&&x.b===it.b);
+ const render=()=>{el.innerHTML=`<p class="sub">${c.sub}</p>
+<form class="addrow" id="${c.key}-f"><div><label for="${c.key}-in">${c.label}</label><input id="${c.key}-in" maxlength="60" placeholder="${c.ph}"></div>
+<div class="toggles"><label><input type="checkbox" id="${c.key}-a">${c.aL}</label><label><input type="checkbox" id="${c.key}-b">${c.bL}</label><button class="pri" type="submit">Hinzufügen</button></div></form>
+<div class="axis"><span>${c.axis[0]}</span><span>${c.axis[1]}</span></div>
+<div class="quad">${c.quads.map((d,qx)=>`<section class="${qx===0?'hot':''}" aria-label="${d.t}"><h3>${d.t}</h3><p class="hint">${d.h}</p><ul>${items.map((it,ix)=>qi(it)===qx?`<li><span>${esc(it.t)}</span><select data-mv="${ix}" aria-label="${esc(it.t)} verschieben" style="width:auto;min-height:36px;padding:4px 6px;font-size:13px">${c.quads.map((o,oi)=>`<option value="${oi}" ${oi===qx?'selected':''}>${o.t}</option>`).join('')}</select><button type="button" data-del="${ix}" aria-label="${esc(it.t)} löschen">×</button></li>`:'').join('')}</ul></section>`).join('')}</div>
+<p class="note">${c.note}</p>
+<div class="btns"><button class="pri" type="button" data-act="copy">Als Text kopieren</button><button type="button" data-act="clear">Alles löschen</button></div>`;
+  el.querySelector('form').addEventListener('submit',e=>{e.preventDefault();const v=$(c.key+'-in').value.trim();if(!v)return;
+   items.push({t:v,a:$(c.key+'-a').checked,b:$(c.key+'-b').checked});save();render();$(c.key+'-in').focus()})};
+ el.addEventListener('change',e=>{const s=e.target.closest('[data-mv]');if(!s)return;const d=c.quads[+s.value];Object.assign(items[+s.dataset.mv],{a:d.a,b:d.b});save();render()});
+ el.addEventListener('click',e=>{const d=e.target.closest('[data-del]'),a=e.target.closest('[data-act]');
+  if(d){items.splice(+d.dataset.del,1);save();render()}
+  if(a&&a.dataset.act==='clear'){items=[];save();render()}
+  if(a&&a.dataset.act==='copy')copy(c.quads.map((d,qx)=>`${d.t}:\n${items.filter(it=>qi(it)===qx).map(it=>'– '+it.t).join('\n')||'– (leer)'}`).join('\n\n'))});
+ render()};
+quadTool($('m-body'),{key:'mx',label:'Aufgabe (kurz)',ph:'z. B. Angebot fertigstellen',aL:'wichtig',bL:'dringend',
+ sub:'Sortiere deine Aufgaben nach wichtig und dringend (Eisenhower-Prinzip). Stichworte reichen.',axis:['↑ wichtig','dringend ←'],
+ quads:[{a:true,b:true,t:'Sofort erledigen',h:'Heute angehen – selbst.'},{a:true,b:false,t:'Einplanen',h:'Fester Termin im Kalender.'},{a:false,b:true,t:'Delegieren',h:'Abgeben oder kurz halten.'},{a:false,b:false,t:'Streichen',h:'Bewusst weglassen.'}],
+ note:'Beispieleinträge zum Ausprobieren. Nutze kurze Stichworte statt vertraulicher Details.',
+ sample:[{t:'Angebot fertigstellen',a:true,b:true},{t:'Quartalsplanung vorbereiten',a:true,b:false},{t:'Rückfrage aus dem Nachbarteam',a:false,b:true},{t:'Alte Ablage aufräumen',a:false,b:false}]});
+quadTool($('s-body'),{key:'sh',label:'Rolle (keine Namen)',ph:'z. B. Key User, Betriebsrat',aL:'großer Einfluss',bL:'hohes Interesse',
+ sub:'Ordne Beteiligte nach Einfluss und Interesse ein und sieh, wie du mit ihnen umgehst. Rollen statt Namen – so bleibt die Map unbedenklich.',axis:['↑ Einfluss','Interesse'],
+ quads:[{a:true,b:true,t:'Eng einbinden',h:'Regelmäßig abstimmen, früh beteiligen.'},{a:true,b:false,t:'Zufriedenstellen',h:'Kurz, auf Entscheidungen fokussiert informieren.'},{a:false,b:true,t:'Informieren',h:'Auf dem Laufenden halten, Feedback einholen.'},{a:false,b:false,t:'Beobachten',h:'Gelegentlich prüfen, ob sich etwas ändert.'}],
+ note:'Beispieleinträge zum Ausprobieren. Deine Map bleibt nur auf diesem Gerät.',
+ sample:[{t:'Auftraggeber:in',a:true,b:true},{t:'Geschäftsführung',a:true,b:false},{t:'Key User',a:false,b:true},{t:'Nachbarabteilung',a:false,b:false}]});
+
+/* Pro: Freischaltung (Demo-Prüfung im Browser) */
+const sig=s=>{let h=7;for(const ch of s)h=(h*31+ch.charCodeAt(0))%1679616;return h.toString(36).toUpperCase().padStart(4,'0')};
+const valid=code=>{const m=/^CL-([A-Z0-9]{4})-([A-Z0-9]{4})$/.exec(code.trim().toUpperCase());return !!m&&m[2]===sig('neo'+m[1])};
+const applyPro=()=>{$('pro-buy').hidden=pro;$('pro-done').hidden=!pro;
+ document.querySelectorAll('#pro-list .lk').forEach(x=>{x.textContent=pro?'Öffnen':'Pro';x.classList.toggle('acc',pro)});
+ document.querySelectorAll('.lockwrap').forEach(w=>{w.innerHTML=pro?'':LOCK;w.nextElementSibling.hidden=!pro});
+ fillSel();renderTip()};
+$('pro-unlock').addEventListener('click',()=>{if(valid($('pro-code').value)){pro=true;store.set('pro',true);applyPro();toast('Pro freigeschaltet')}
+ else $('pro-msg').textContent='Dieser Code passt nicht. Format: CL-XXXX-XXXX'});
+$('pro-code').addEventListener('keydown',e=>{if(e.key==='Enter')$('pro-unlock').click()});
+$('pro-kaufen').addEventListener('click',()=>{$('pro-kaufmsg').textContent='Der Verkauf startet in Kürze. Folge Neo auf YouTube oder LinkedIn, dann erfährst du als Erste:r davon.'});
+$('pro-lock').addEventListener('click',()=>{pro=false;store.set('pro',false);applyPro()});
+applyPro();
+/* Offline-Funktion */
+if('serviceWorker' in navigator&&location.protocol==='https:'){addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})})}
+}
+</script>
+</body>
+</html>
